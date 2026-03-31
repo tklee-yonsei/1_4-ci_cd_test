@@ -80,3 +80,33 @@ def save_figure(fig, filename, formats=("pdf", "png")):
         dpi = 300 if fmt == "png" else None
         fig.savefig(filepath, bbox_inches="tight", dpi=dpi)
         print(f"  저장: {filepath}")
+
+
+def create_subplots(n_cols, fig_width_per_col=5, height=4):
+    """논문용 서브플롯을 가로로 배열하여 생성합니다.
+
+    apply_style()을 내부적으로 호출하므로 별도 스타일 적용이 필요 없습니다.
+    n_cols=1인 경우에도 axes를 리스트로 반환하여 일관된 인터페이스를 제공합니다.
+
+    Parameters
+    ----------
+    n_cols : int
+        가로 방향 서브플롯 수
+    fig_width_per_col : float, optional
+        서브플롯 하나당 Figure 너비 (인치). 기본값은 5.
+        전체 Figure 너비 = fig_width_per_col * n_cols
+    height : float, optional
+        Figure 높이 (인치). 기본값은 4.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        생성된 Figure 객체
+    axes : list of matplotlib.axes.Axes
+        길이 n_cols인 Axes 리스트
+    """
+    apply_style()
+    fig, axes = plt.subplots(1, n_cols, figsize=(fig_width_per_col * n_cols, height))
+    if n_cols == 1:
+        axes = [axes]
+    return fig, axes
