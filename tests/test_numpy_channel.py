@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from numpy_channel import generate_rayleigh_channel, channel_capacity
 
-
 # ===== Fixture =====
 
 
