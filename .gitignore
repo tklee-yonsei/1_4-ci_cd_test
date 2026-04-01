@@ -3,6 +3,9 @@ __pycache__/
 *.pyc
 .venv/
 
+# Pytest
+.pytest_cache/
+
 # 시뮬레이션 결과
 results/
 *.h5
