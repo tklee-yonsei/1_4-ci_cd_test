@@ -1,0 +1,8 @@
+services:
+  python:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app

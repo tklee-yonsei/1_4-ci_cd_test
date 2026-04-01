@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 시뮬레이션 결과
+results/
+*.h5
+
+# 생성된 이미지 (필요시 주석 해제)
+# *.png
+# *.pdf
+
+# OS
+.DS_Store
+Thumbs.db
