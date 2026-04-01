@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install black
+
+      - name: Check formatting with Black
+        run: black --check .
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint # lint가 통과해야 test 실행
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y libhdf5-dev
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest tests/ -v
