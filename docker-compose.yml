@@ -1,8 +1,36 @@
 services:
-  python:
-    build:
-      context: .
-      dockerfile: .devcontainer/Dockerfile
+  # 시뮬레이션 데이터 생성
+  generate:
+    build: .
     volumes:
-      - .:/app
-    working_dir: /app
+      - ./data:/app/data
+    command: python generate.py --output /app/data/simulation.h5
+
+  # 데이터 분석 + 그래프
+  analyze:
+    build: .
+    volumes:
+      - ./data:/app/data
+    command: >
+      python analyze.py
+      --input /app/data/simulation.h5
+      --output /app/data/analysis_result
+
+  # 채널 용량 그래프
+  plot-capacity:
+    build: .
+    volumes:
+      - ./data:/app/data
+    command: python plot_capacity.py --output /app/data/mimo_capacity
+
+  # Path Loss 그래프
+  plot-path-loss:
+    build: .
+    volumes:
+      - ./data:/app/data
+    command: python plot_path_loss.py --output /app/data/path_loss_models
+
+  # 테스트
+  test:
+    build: .
+    command: pytest tests/ -v
