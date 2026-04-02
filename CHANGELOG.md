@@ -1,8 +1,22 @@
 # Changelog
 
+## [v2.0] - 2026-04-02
+
+### [v2.0] - Added
+- Docker Compose 멀티 서비스 구성 (generate, analyze, plot-capacity, plot-path-loss, test)
+- 실행용 Dockerfile (루트)
+- argparse CLI 인터페이스 (generate.py, analyze.py, plot_capacity.py, plot_path_loss.py)
+- Makefile (pipeline, test, clean 등)
+- CLI 테스트 (test_cli.py)
+- data/ 디렉토리 (공유 볼륨)
+
+### [v2.0] - Changed
+- docker-compose.yml 재구성 (단일 서비스 → 멀티 서비스)
+- analyze.py 리팩토링 (함수 분리)
+
 ## [v1.5] - 2026-04-01
 
-### Added
+### [v1.5] - Added
 - CI/CD 파이프라인 구축 (GitHub Actions)
   - Black 포맷 검사 (lint job)
   - pytest 자동 실행 (test job, lint 통과 후 실행)
@@ -12,7 +26,7 @@
 - pytest 설정 (`pyproject.toml`)
 - CI 배지를 README에 추가
 
-### Changed
+### [v1.5] - Changed
 - `generate.py` 코드 리팩토링 (함수 분리 및 구조 개선)
 - `requirements.txt`에 테스트 의존성 추가 (`pytest`, `numpy`, `h5py`)
 
