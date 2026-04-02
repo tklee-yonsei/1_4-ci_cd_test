@@ -6,6 +6,7 @@ Rayleigh fading 채널과 3GPP 경로 손실 모델을 기반으로
 HDF5 형식으로 저장합니다.
 """
 
+import argparse
 import numpy as np
 import h5py
 import time
@@ -60,6 +61,11 @@ def save_to_hdf5(filename, scenarios_data, frequencies):
     -------
     None
     """
+    # 출력 디렉토리 생성
+    output_dir = os.path.dirname(filename)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     with h5py.File(filename, "w") as f:
         f.attrs["created_by"] = "generate.py"
         f.attrs["n_frequencies"] = len(frequencies)
@@ -78,24 +84,55 @@ def save_to_hdf5(filename, scenarios_data, frequencies):
                 grp.create_dataset("distances", data=data["distances"])
 
 
-if __name__ == "__main__":
-    print("===== 시뮬레이션 데이터 생성 =====")
-    start = time.time()
+def parse_args():
+    """명령줄 인자를 파싱합니다."""
+    parser = argparse.ArgumentParser(description="통신 채널 시뮬레이션 데이터 생성")
+    parser.add_argument(
+        "--n-scenarios", type=int, default=50, help="주파수당 시나리오 수 (기본값: 50)"
+    )
+    parser.add_argument(
+        "--n-samples", type=int, default=200, help="시나리오당 샘플 수 (기본값: 200)"
+    )
+    parser.add_argument(
+        "--frequencies",
+        type=float,
+        nargs="+",
+        default=[3.5, 28, 60],
+        help="주파수 목록 (GHz 단위, 기본값: 3.5 28 60)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="simulation.h5",
+        help="출력 파일 경로 (기본값: simulation.h5)",
+    )
+    return parser.parse_args()
 
-    n_scenarios = 50
-    n_samples = 200
-    frequencies = [3.5e9, 28e9, 60e9]
+
+if __name__ == "__main__":
+    args = parse_args()
+    frequencies = [f * 1e9 for f in args.frequencies]  # GHz → Hz 변환
+
+    print("===== 시뮬레이션 데이터 생성 =====")
+    print(f"시나리오 수: {args.n_scenarios}")
+    print(f"샘플 수: {args.n_samples}")
+    print(f"주파수: {args.frequencies} GHz")
+    print(f"출력: {args.output}")
+    print()
+
+    start = time.time()
 
     scenarios_data = {}
     for freq in frequencies:
         scenarios_data[freq] = [
-            generate_scenario(n_samples, freq=freq) for _ in range(n_scenarios)
+            generate_scenario(args.n_samples, freq=freq)
+            for _ in range(args.n_scenarios)
         ]
 
-    save_to_hdf5("simulation.h5", scenarios_data, frequencies)
+    save_to_hdf5(args.output, scenarios_data, frequencies)
 
     elapsed = time.time() - start
-    file_size = os.path.getsize("simulation.h5") / 1024 / 1024
-    print(f"시나리오: {n_scenarios * len(frequencies)}개")
+    file_size = os.path.getsize(args.output) / 1024 / 1024
+    print(f"시나리오: {args.n_scenarios * len(frequencies)}개")
     print(f"파일 크기: {file_size:.1f} MB")
     print(f"소요 시간: {elapsed:.1f}초")
