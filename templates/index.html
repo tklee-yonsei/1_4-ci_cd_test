@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Telecom Simulation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #1f77b4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #155a87;
+        }
+
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .result-image {
+            max-width: 100%;
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📡 Telecom Simulation</h1>
+
+    <div class="section">
+        <h2>1. 시뮬레이션 데이터 생성</h2>
+        <div class="form-group">
+            <label>시나리오 수 (주파수당)</label>
+            <input type="number" id="n_scenarios" value="20">
+        </div>
+        <div class="form-group">
+            <label>샘플 수 (시나리오당)</label>
+            <input type="number" id="n_samples" value="100">
+        </div>
+        <div class="form-group">
+            <label>주파수 (GHz, 쉼표로 구분)</label>
+            <input type="text" id="frequencies" value="3.5, 28, 60">
+        </div>
+        <button onclick="runGenerate()">Generate</button>
+        <div id="generate-status" class="status" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. 분석 및 그래프 생성</h2>
+        <div class="form-group">
+            <label>SNR (dB)</label>
+            <input type="number" id="snr" value="20">
+        </div>
+        <button onclick="runAnalyze()">Analyze</button>
+        <div id="analyze-status" class="status" style="display:none;"></div>
+        <img id="result-image" class="result-image" style="display:none;">
+    </div>
+
+    <script>
+        function showStatus(id, type, text) {
+            const el = document.getElementById(id);
+            el.className = `status ${type}`;
+            el.textContent = text;
+            el.style.display = "block";
+        }
+
+        async function runGenerate() {
+            const payload = {
+                n_scenarios: parseInt(document.getElementById("n_scenarios").value),
+                n_samples: parseInt(document.getElementById("n_samples").value),
+                frequencies: document.getElementById("frequencies").value
+                    .split(",").map(s => parseFloat(s.trim())),
+            };
+
+            showStatus("generate-status", "running", "실행 중...");
+
+            try {
+                const res = await fetch("/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                showStatus(
+                    "generate-status",
+                    "success",
+                    `완료\n시나리오: ${data.n_scenarios}개\n파일: ${data.output} (${data.file_size_mb} MB)`
+                );
+            } catch (err) {
+                showStatus("generate-status", "error", `오류: ${err.message}`);
+            }
+        }
+
+        async function runAnalyze() {
+            const payload = {
+                input: "simulation.h5",
+                output: "analysis_result",
+                snr: parseFloat(document.getElementById("snr").value),
+            };
+
+            showStatus("analyze-status", "running", "분석 중...");
+            document.getElementById("result-image").style.display = "none";
+
+            try {
+                const res = await fetch("/api/analyze", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+
+                if (data.status === "error") {
+                    showStatus("analyze-status", "error", data.message);
+                    return;
+                }
+
+                const summary = Object.entries(data.summary)
+                    .map(([k, v]) => `${k}: PL=${v.avg_path_loss_db}dB, C=${v.avg_capacity_bps_hz}bps/Hz`)
+                    .join("\n");
+                showStatus("analyze-status", "success", `완료\n${summary}`);
+
+                // 캐시 방지를 위한 타임스탬프
+                const img = document.getElementById("result-image");
+                img.src = `/api/results/${data.output_png}?t=${Date.now()}`;
+                img.style.display = "block";
+            } catch (err) {
+                showStatus("analyze-status", "error", `오류: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+
+</html>

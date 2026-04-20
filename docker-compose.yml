@@ -30,6 +30,15 @@ services:
       - ./data:/app/data
     command: python plot_path_loss.py --output /app/data/path_loss_models
 
+  # 웹 API 서버
+  web:
+    build: .
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./data:/app/data
+    command: python app.py
+
   # 테스트
   test:
     build: .
