@@ -1,5 +1,22 @@
 # Changelog
 
+## [v2.1] - 2026-04-20
+
+### [v2.1] - Added
+- Flask API 서버 (app.py)
+  - GET /api/health
+  - POST /api/generate
+  - POST /api/analyze
+  - GET /api/results
+  - GET /api/results/<filename>
+- 웹 UI (templates/index.html)
+- docker-compose.yml에 web 서비스 추가
+- API 엔드포인트 테스트 (test_app.py)
+
+### [v2.1] - Changed
+- Dockerfile에 templates/ 디렉토리 복사 추가
+- requirements.txt에 flask 추가
+
 ## [v2.0] - 2026-04-02
 
 ### [v2.0] - Added
