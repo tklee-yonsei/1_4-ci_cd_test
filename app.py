@@ -1,23 +1,64 @@
 """
 시뮬레이션 웹 API 서버
-
-Flask 기반으로 브라우저에서 시뮬레이션을 실행하고
-결과를 확인할 수 있는 웹 인터페이스를 제공합니다.
 """
 
-from flask import Flask, jsonify
+import os
+from flask import Flask, jsonify, request, send_from_directory
+from generate import generate_scenario, save_to_hdf5
+from analyze import load_and_analyze, plot_analysis
 
 app = Flask(__name__)
 
-
-@app.route("/")
-def index():
-    return "Telecom Simulation API"
+# 결과 파일 저장 경로
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
+os.makedirs(DATA_DIR, exist_ok=True)
 
 
 @app.route("/api/health")
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/generate", methods=["POST"])
+def api_generate():
+    """시뮬레이션 데이터 생성
+
+    Request JSON:
+        {
+            "n_scenarios": 50,
+            "n_samples": 200,
+            "frequencies": [3.5, 28, 60],
+            "output": "simulation.h5"
+        }
+    """
+    data = request.get_json() or {}
+    n_scenarios = data.get("n_scenarios", 50)
+    n_samples = data.get("n_samples", 200)
+    frequencies_ghz = data.get("frequencies", [3.5, 28, 60])
+    output = data.get("output", "simulation.h5")
+
+    frequencies = [f * 1e9 for f in frequencies_ghz]
+    output_path = os.path.join(DATA_DIR, output)
+
+    # 데이터 생성
+    scenarios_data = {}
+    for freq in frequencies:
+        scenarios_data[freq] = [
+            generate_scenario(n_samples, freq=freq) for _ in range(n_scenarios)
+        ]
+
+    save_to_hdf5(output_path, scenarios_data, frequencies)
+
+    file_size_mb = os.path.getsize(output_path) / 1024 / 1024
+
+    return jsonify(
+        {
+            "status": "success",
+            "n_scenarios": n_scenarios * len(frequencies),
+            "output": output,
+            "file_size_mb": round(file_size_mb, 2),
+        }
+    )
 
 
 if __name__ == "__main__":
