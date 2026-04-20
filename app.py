@@ -61,5 +61,57 @@ def api_generate():
     )
 
 
+@app.route("/api/analyze", methods=["POST"])
+def api_analyze():
+    """데이터 분석 및 그래프 생성
+
+    Request JSON:
+        {
+            "input": "simulation.h5",
+            "output": "analysis_result",
+            "snr": 20
+        }
+    """
+    data = request.get_json() or {}
+    input_file = data.get("input", "simulation.h5")
+    output_prefix = data.get("output", "analysis_result")
+    snr_db = data.get("snr", 20)
+
+    input_path = os.path.join(DATA_DIR, input_file)
+    output_path = os.path.join(DATA_DIR, output_prefix)
+
+    if not os.path.exists(input_path):
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": f"Input file not found: {input_file}",
+                }
+            ),
+            404,
+        )
+
+    freq_data = load_and_analyze(input_path, snr_db=snr_db)
+    plot_analysis(freq_data, output_path)
+
+    # 주파수별 요약 통계
+    summary = {}
+    for name, d in freq_data.items():
+        summary[name] = {
+            "n_samples": len(d["path_loss"]),
+            "avg_path_loss_db": round(float(d["path_loss"].mean()), 2),
+            "avg_capacity_bps_hz": round(float(d["capacity"].mean()), 2),
+        }
+
+    return jsonify(
+        {
+            "status": "success",
+            "output_png": f"{output_prefix}.png",
+            "output_pdf": f"{output_prefix}.pdf",
+            "summary": summary,
+        }
+    )
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
