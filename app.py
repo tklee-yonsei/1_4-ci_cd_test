@@ -3,7 +3,7 @@
 """
 
 import os
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, render_template
 from generate import generate_scenario, save_to_hdf5
 from analyze import load_and_analyze, plot_analysis
 
@@ -12,6 +12,11 @@ app = Flask(__name__)
 # 결과 파일 저장 경로
 DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 os.makedirs(DATA_DIR, exist_ok=True)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 @app.route("/api/health")
