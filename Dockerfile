@@ -13,3 +13,4 @@ RUN pip install -r /tmp/requirements.txt
 WORKDIR /app
 COPY *.py ./
 COPY tests/ ./tests/
+COPY templates/ ./templates/
