@@ -113,5 +113,30 @@ def api_analyze():
     )
 
 
+@app.route("/api/results")
+def api_results():
+    """결과 파일 목록 조회"""
+    if not os.path.exists(DATA_DIR):
+        return jsonify({"files": []})
+
+    files = []
+    for filename in sorted(os.listdir(DATA_DIR)):
+        filepath = os.path.join(DATA_DIR, filename)
+        if os.path.isfile(filepath) and not filename.startswith("."):
+            files.append(
+                {
+                    "name": filename,
+                    "size_kb": round(os.path.getsize(filepath) / 1024, 1),
+                }
+            )
+    return jsonify({"files": files})
+
+
+@app.route("/api/results/<path:filename>")
+def api_result_file(filename):
+    """결과 파일 다운로드 (이미지 등)"""
+    return send_from_directory(DATA_DIR, filename)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
